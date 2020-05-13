@@ -165,16 +165,18 @@ class Player(pygame.sprite.Sprite):
             self.animation = self.animations[self.state]
             if self.frame >= len(self.animation):
                 self.frame = 0
+                if self.state == HIT_FWD:
+                    self.state = IDLE_FWD
             center = self.rect.center
             self.image = self.animation[self.frame]
             self.rect = self.image.get_rect()
             self.rect.center = center
             self.mask = pygame.mask.from_surface(self.image)
         
-        if self.state == HIT_FWD and self.fire == False:
+        '''if self.state == HIT_FWD and self.fire == False:
             if time.time() > self.time + .5:   
                 print('IDLE_FWD')
-                self.state = IDLE_FWD
+                self.state = IDLE_FWD'''
         if self.fire == True:
             print('fire')
             if self.state == IDLE_FWD:
