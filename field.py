@@ -172,11 +172,18 @@ class Player(pygame.sprite.Sprite):
             self.mask = pygame.mask.from_surface(self.image)
         
         if self.state == HIT_FWD and self.fire == False:
-            self.state = IDLE_FWD
+            if time.time() > self.time + .5:   
+                print('IDLE_FWD')
+                self.state = IDLE_FWD
         if self.fire == True:
+            print('fire')
             if self.state == IDLE_FWD:
+                self.time = time.time()
+                print('IDLE_FWD')
                 self.state = HIT_FWD
                 self.fire = False
+            else:
+                print(self.state)
           
         keys = pygame.key.get_pressed() 
         if self.state == BKD:  
@@ -301,8 +308,7 @@ def field_screen(screen):
     while running:
         
         clock.tick(FPS)
-        for event in pygame.event.get():
-            
+        for event in pygame.event.get():      
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:       
@@ -310,6 +316,11 @@ def field_screen(screen):
                     running = False
                 if player.state != AIR:
                     if player.state in UNARMED:
+                        print(event.key)
+                        if event.key == pygame.K_e and player.state not in X:
+                            spotted_sound.play()
+                            player.fire = True
+                            
                         if event.key == pygame.K_s and player.state not in X:
                             steps_sound.play()
                             player.speedy = 5
