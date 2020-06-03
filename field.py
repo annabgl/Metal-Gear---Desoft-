@@ -321,6 +321,7 @@ spotted_sound = pygame.mixer.Sound(path.join(snd_dir, 'spotted.ogg'))
 land_sound = pygame.mixer.Sound(path.join(snd_dir, 'land.wav'))
 cock_sound = pygame.mixer.Sound(path.join(snd_dir, 'cock.wav'))
 
+
 def field_screen(screen):
     
     running = True  
@@ -363,7 +364,7 @@ def field_screen(screen):
                     if player.state in UNARMED:
                         print(event.key)
                         if event.key == pygame.K_e:
-                            spotted_sound.play()
+                            #spotted_sound.play()
                             player.fire = True
                         if event.key == pygame.K_s and player.state not in X:
                             steps_sound.play()
@@ -382,6 +383,8 @@ def field_screen(screen):
                             player.speedx = -5
                             player.state = LEFT
                     elif player.state in ARMED:
+                       # if event.key == pygame.K_e:
+                           # player.fire = True
                         if event.key == pygame.K_s and player.state not in X_G:
                             steps_sound.play()
                             player.speedy = 5
