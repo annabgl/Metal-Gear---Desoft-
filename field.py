@@ -68,14 +68,14 @@ mapa = [
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l]]
 
 
-def draw_lifebar(surf, x, y , pct):
+def draw_lifebar(surf, x_b, y_l , pct):
+    life_bar = pygame.image.load(path.join(img_dir,"lifebar.png")).convert_alpha()
     if pct < 0:
         pct = 0
-    bar_length = 100
-    bar_height = 20
+    bar_length = 238
+    bar_height = 10
     fill = pct * bar_length
-    line = pygame.Rect(x, y, bar_length, bar_height)
-    fill_rect = pygame.Rect(x, y, fill, bar_height)
+    fill_rect = pygame.Rect(x_b+40, y_l+28, fill, bar_height)
     if pct > 0.6:
         color = GREEN
     elif pct > 0.3:
@@ -83,7 +83,7 @@ def draw_lifebar(surf, x, y , pct):
     else:
         color = RED
     pygame.draw.rect(surf, color, fill_rect)
-    pygame.draw.rect(surf, WHITE, line, 2)
+    surf.blit(life_bar,(x_b,y_l))
 
 class Player(pygame.sprite.Sprite):
     
