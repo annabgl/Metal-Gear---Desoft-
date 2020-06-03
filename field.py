@@ -49,6 +49,8 @@ X_G = [GUN_RIGHT, GUN_LEFT]
 Y_G = [GUN_FWD, GUN_BKD]
 UNARMED = [IDLE_RIGHT, IDLE_LEFT, IDLE_FWD, IDLE_BKD]
 ARMED = [GUN_RIGHT, GUN_LEFT, GUN_FWD, GUN_BKD]
+MARCH= [MARCH_BKD, MARCH_FWD, MARCH_LEFT, MARCH_RIGHT]
+
 
 ITEM = 0
 
@@ -73,7 +75,7 @@ def draw_lifebar(surf, x_b, y_l , pct):
     if pct < 0:
         pct = 0
     bar_length = 238
-    bar_height = 10
+    bar_height = 10 
     fill = pct * bar_length
     fill_rect = pygame.Rect(x_b+40, y_l+28, fill, bar_height)
     if pct > 0.6:
@@ -84,7 +86,15 @@ def draw_lifebar(surf, x_b, y_l , pct):
         color = RED
     pygame.draw.rect(surf, color, fill_rect)
     surf.blit(life_bar,(x_b,y_l))
-
+    
+def draw_weapon(surf,x,y,armed):
+    if armed:
+        weapon = pygame.image.load(path.join(img_dir,"gun.png")).convert_alpha()
+    else:
+        weapon = pygame.image.load(path.join(img_dir,"fist.png")).convert_alpha()
+    surf.blit(weapon,(x,y))
+    
+    
 class Player(pygame.sprite.Sprite):
     
     def __init__(self):
@@ -425,8 +435,10 @@ def field_screen(screen):
         all_sprites.update()
         screen.fill(BLACK)
         all_sprites.draw(screen) 
-        draw_lifebar(screen, 10, 10, player.health / HEALTH)
+        draw_lifebar(screen, 10, 10, player.health / HEALTH) 
+        draw_weapon(screen, 200,200,player.got)
         pygame.display.flip()
+        
         
 try:
     field_screen(screen)
