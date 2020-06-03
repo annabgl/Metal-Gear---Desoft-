@@ -9,6 +9,7 @@ snd_dir = path.join(path.dirname(__file__), 'sons')
 WIDTH = 1344
 HEIGHT = 704 
 FPS = 60
+HEALTH = 100
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -58,13 +59,31 @@ mapa = [
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o],
-       [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l,l,l,l,l,l],
+       [o,o,o,o,o,o,o,o,o,o,o,o,o,o,l,l,l,l,l,l,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l]]
+
+
+def draw_lifebar(surf, x, y , pct):
+    if pct < 0:
+        pct = 0
+    bar_length = 100
+    bar_height = 20
+    fill = pct * bar_length
+    line = pygame.Rect(x, y, bar_length, bar_height)
+    fill_rect = pygame.Rect(x, y, fill, bar_height)
+    if pct > 0.6:
+        color = GREEN
+    elif pct > 0.3:
+        color = YELLOW
+    else:
+        color = RED
+    pygame.draw.rect(surf, color, fill_rect)
+    pygame.draw.rect(surf, WHITE, line, 2)
 
 class Player(pygame.sprite.Sprite):
     
@@ -146,6 +165,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.bottom = -20
         self.speedx = 0
         self.speedy = 2
+        self.health = HEALTH
+        
         
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
@@ -167,22 +188,31 @@ class Player(pygame.sprite.Sprite):
                 self.frame = 0
                 if self.state == HIT_FWD:
                     self.state = IDLE_FWD
+                if self.state == HIT_LEFT:
+                    self.state = IDLE_LEFT
+                if self.state == HIT_BKD:
+                    self.state = IDLE_BKD
+                if self.state == HIT_RIGHT:
+                    self.state = IDLE_RIGHT
             center = self.rect.center
             self.image = self.animation[self.frame]
             self.rect = self.image.get_rect()
             self.rect.center = center
             self.mask = pygame.mask.from_surface(self.image)
         
-        '''if self.state == HIT_FWD and self.fire == False:
-            if time.time() > self.time + .5:   
-                print('IDLE_FWD')
-                self.state = IDLE_FWD'''
+
         if self.fire == True:
-            print('fire')
             if self.state == IDLE_FWD:
-                self.time = time.time()
-                print('IDLE_FWD')
                 self.state = HIT_FWD
+                self.fire = False
+            if self.state == IDLE_BKD:
+                self.state = HIT_BKD
+                self.fire = False
+            if self.state == IDLE_RIGHT:
+                self.state = HIT_RIGHT
+                self.fire = False
+            if self.state == IDLE_LEFT:
+                self.state = HIT_LEFT
                 self.fire = False
             else:
                 print(self.state)
@@ -194,6 +224,7 @@ class Player(pygame.sprite.Sprite):
                 self.speedy = 0
                 self.speedx = 0
                 self.state = IDLE_BKD
+                
         if self.state == FWD:  
             if keys[pygame.K_w] == False:
                 steps_sound.stop()
@@ -215,6 +246,18 @@ class Player(pygame.sprite.Sprite):
                 
         self.rect.x += self.speedx
         self.rect.y += self.speedy
+        
+    def lifebar(self):
+        if self.life > 60:
+            color = GREEN
+        elif self.life > 30:
+            color = YELLOW
+        else:
+            color = RED
+        width = int(self.rect.width * self.health / 100)
+        self.health = pygame.Rect(0, 0, width, 7)
+        if self.life < 100:
+            pygame.draw.rect(self.image, color, self.health)
         
 class Tile(pygame.sprite.Sprite):
     def __init__(self, row, column):
@@ -319,10 +362,9 @@ def field_screen(screen):
                 if player.state != AIR:
                     if player.state in UNARMED:
                         print(event.key)
-                        if event.key == pygame.K_e and player.state not in X:
+                        if event.key == pygame.K_e:
                             spotted_sound.play()
                             player.fire = True
-                            
                         if event.key == pygame.K_s and player.state not in X:
                             steps_sound.play()
                             player.speedy = 5
@@ -379,7 +421,8 @@ def field_screen(screen):
                 
         all_sprites.update()
         screen.fill(BLACK)
-        all_sprites.draw(screen)       
+        all_sprites.draw(screen) 
+        draw_lifebar(screen, 10, 10, player.health / HEALTH)
         pygame.display.flip()
         
 try:
