@@ -86,13 +86,16 @@ def draw_lifebar(surf, x_b, y_l , pct):
         color = RED
     pygame.draw.rect(surf, color, fill_rect)
     surf.blit(life_bar,(x_b,y_l))
-    
+
 def draw_weapon(surf,x,y,armed):
     if armed:
         weapon = pygame.image.load(path.join(img_dir,"gun.png")).convert_alpha()
+        weapon=pygame.transform.scale(weapon, (38, 37))
+        surf.blit(weapon,(x,y))
     else:
         weapon = pygame.image.load(path.join(img_dir,"fist.png")).convert_alpha()
-    surf.blit(weapon,(x,y))
+        weapon=pygame.transform.scale(weapon, (38, 37))
+        surf.blit(weapon,(x,y))
     
     
 class Player(pygame.sprite.Sprite):
@@ -436,7 +439,7 @@ def field_screen(screen):
         screen.fill(BLACK)
         all_sprites.draw(screen) 
         draw_lifebar(screen, 10, 10, player.health / HEALTH) 
-        draw_weapon(screen, 200,200,player.got)
+        draw_weapon(screen, 37,11,player.got)
         pygame.display.flip()
         
         
