@@ -291,6 +291,10 @@ class Tree(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = TILESIZE * column
         self.rect.y = TILESIZE * row
+        
+class Wall():
+    def __init__(self, x, y, WIDTH, HEIGHT):  
+        self.rect = pygame.Rect(x, y, WIDTH, HEIGHT)
 
 class Gun(pygame.sprite.Sprite):
     def __init__(self):
@@ -345,8 +349,10 @@ def field_screen(screen):
     column = len(mapa[0])
     tiles = pygame.sprite.Group()
     trees = pygame.sprite.Group()
+    walls = [Wall(-10, 0, 10, HEIGHT), Wall(0, -10, WIDTH, 10), Wall(1330, 0, 10, HEIGHT),Wall(0, 690, WIDTH, 10)]
     player = Player()
     gun = Gun()
+    wall = Wall(-10, 0, 10, HEIGHT)
 #    item = Item()
     all_sprites = pygame.sprite.Group()
     for row in range(len(mapa)):
@@ -363,7 +369,7 @@ def field_screen(screen):
     all_sprites.add(player)
     all_sprites.add(gun)
 #    all_sprites.add(item)
-
+    walls.append(wall)
     while running:
         
         clock.tick(FPS)
@@ -419,6 +425,9 @@ def field_screen(screen):
         
         if player.state != AIR:
             collisions = pygame.sprite.spritecollide(player, trees, False)
+            for wall in walls:
+                if(pygame.sprite.collide_rect(player, wall)):
+                    collisions.append(wall)  
             for collision in collisions:
                 if player.speedx > 0:
                     player.rect.right = collision.rect.left
