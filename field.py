@@ -10,6 +10,7 @@ WIDTH = 1344
 HEIGHT = 704 
 FPS = 60
 HEALTH = 100
+WAVE_NUMBER = 1
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -307,7 +308,7 @@ class Gun(pygame.sprite.Sprite):
         self.rect.y = HEIGHT/2
         
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,x,y):        
         pygame.sprite.Sprite.__init__(self)
         
         spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert(),
@@ -325,7 +326,8 @@ class Enemy(pygame.sprite.Sprite):
                         pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert(),
                         pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert(),
                         pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert()]         
+                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert()] 
+        
         i = 0
         while i < len(spritesheet):
             if i < len(spritesheet) - 1:
@@ -355,14 +357,15 @@ class Enemy(pygame.sprite.Sprite):
                            HIT_BKD:spritesheet[26:27],
                            HIT_LEFT:spritesheet[27:28]}
         
+        self.state = FWD
         self.animation = self.animations[self.state]
         self.frame = 0
         self.got = False
         self.fire = False
         self.image = self.animation[self.frame]
         self.rect = self.image.get_rect()
-        self.rect.x = WIDTH - 120
-        self.rect.bottom = -20
+        self.rect.x = x
+        self.rect.bottom = y
         self.speedx = 0
         self.speedy = 2
         self.health = HEALTH
@@ -405,7 +408,7 @@ cock_sound = pygame.mixer.Sound(path.join(snd_dir, 'cock.wav'))
 
 
 def field_screen(screen):
-    
+    global    WAVE_NUMBER
     running = True  
     pygame.mixer.music.load(path.join(snd_dir, 'Evasion.mp3'))
     pygame.mixer.music.set_volume(0.7)
@@ -414,6 +417,7 @@ def field_screen(screen):
     column = len(mapa[0])
     tiles = pygame.sprite.Group()
     trees = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
     walls = [Wall(-10, 0, 10, HEIGHT), Wall(0, -10, WIDTH, 10), Wall(1330, 0, 10, HEIGHT),Wall(0, 690, WIDTH, 10)]
     player = Player()
     gun = Gun()
@@ -445,6 +449,12 @@ def field_screen(screen):
                 if event.key == pygame.K_q:
                     running = False
                 if player.state != AIR:
+                    if len(enemies) == 0:
+                        for wave in range(WAVE_NUMBER):
+                            inimigo = Enemy(random.randint(300,1000),random.randint(100, 500))
+                            all_sprites.add(inimigo)
+                            enemies.add(inimigo)
+                        WAVE_NUMBER += 1
                     if player.state in UNARMED:
                         print(event.key)
                         if event.key == pygame.K_e:
@@ -508,6 +518,10 @@ def field_screen(screen):
                 gun.kill()
                 player.got = True
 #                item.gun = True
+            
+            collisions = pygame.sprite.spritecollide(player, enemies, False)
+            
+            
                 
         all_sprites.update()
         screen.fill(BLACK)
