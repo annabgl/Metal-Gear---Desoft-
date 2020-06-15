@@ -6,10 +6,12 @@ from os import path
 img_dir = path.join(path.dirname(__file__), 'imagens')
 snd_dir = path.join(path.dirname(__file__), 'sons')
 
+WIN = pygame.display.set_mode((500,480))
 WIDTH = 1344
 HEIGHT = 704 
 FPS = 60
 HEALTH = 100
+HEALTH_ENEMY = 100
 WAVE_NUMBER = 1
 
 WHITE = (255, 255, 255)
@@ -307,27 +309,37 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x = WIDTH/2
         self.rect.y = HEIGHT/2
         
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface([4, 10])
+        self.image.fill(BLACK)
+        self.rect = self.image.get_rect()
+        
+    def update(self):
+        self.rect.y -= 3
+        
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self,x,y,player):     
+    def __init__(self,x,y,player):  
         self.player=player
         pygame.sprite.Sprite.__init__(self)
         
-        spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_fwd0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_fwd1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert()] 
+        spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert_alpha()] 
         
         i = 0
         while i < len(spritesheet):
@@ -369,12 +381,11 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.bottom = y
         self.speedx = 0
         self.speedy = 2
-        self.health = HEALTH
-        
+        self.health_enemy = HEALTH_ENEMY
         
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
-            
+        
     def update(self):
         
         now = pygame.time.get_ticks()
@@ -422,40 +433,63 @@ class Enemy(pygame.sprite.Sprite):
             self.speedy = 5 
             self.state = BKD
    
-#--------------------------------------------------         
-            
         if self.state == BKD:  
             if direction != "down":
                 steps_sound.stop()
                 self.speedy = 0
                 self.speedx = 0
                 self.state = IDLE_BKD
-#left
-#right
                 
-#**********************************************              
+        if self.player.rect.bottom < self.rect.bottom:
+            direction = "up"
+            self.speedy = 5 
+            self.state = FWD
+            
         if self.state == FWD:  
-            if keys[pygame.K_w] == False:
+            if direction != "up":
                 steps_sound.stop()
                 self.speedy = 0
                 self.speedx = 0
                 self.state = IDLE_FWD
-        if self.state == RIGHT:  
-            if keys[pygame.K_d] == False:
-                steps_sound.stop()
-                self.speedy = 0
-                self.speedx = 0
-                self.state = IDLE_RIGHT
+            
+        if self.player.rect.left > self.rect.left:
+            direction = "left"
+            self.speedx = 5 
+            self.state = LEFT
+            
         if self.state == LEFT:  
-            if keys[pygame.K_a] == False:
+            if direction == "left":
                 steps_sound.stop()
                 self.speedy = 0
                 self.speedx = 0
                 self.state = IDLE_LEFT
-                
+            
+        if self.player.rect.left < self.rect.left:
+            direction = "right"
+            self.speedx = 5 
+            self.state = RIGHT
+            
+        if self.state == RIGHT:  
+            if direction == "right":
+                steps_sound.stop()
+                self.speedy = 0
+                self.speedx = 0
+                self.state = IDLE_RIGHT
+         
         self.rect.x += self.speedx
         self.rect.y += self.speedy  
     
+    def lifebar_enemy(self):
+        if self.life_enemy > 60:
+            color = GREEN
+        elif self.life_enemy > 30:
+            color = YELLOW
+        else:
+            color = RED
+        width = int(self.rect.width * self.health_enemy / 100)
+        self.health_enemy = pygame.Rect(0, 0, width, 7)
+        if self.life_enemy < 100:
+            pygame.draw.rect(self.image, color, self.health_enemy)
 #class Item(pygame.sprite.Sprite):
 #    def __init__(self):
 #        pygame.sprite.Sprite.__init__(self)
@@ -500,6 +534,7 @@ def field_screen(screen):
     tiles = pygame.sprite.Group()
     trees = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
     walls = [Wall(-10, 0, 10, HEIGHT), Wall(0, -10, WIDTH, 10), Wall(1330, 0, 10, HEIGHT),Wall(0, 690, WIDTH, 10)]
     player = Player()
     gun = Gun()
@@ -529,11 +564,11 @@ def field_screen(screen):
                 running = False
             if event.type == pygame.KEYDOWN:       
                 if event.key == pygame.K_q:
-                    running = False
+                    running = False            
                 if player.state != AIR:
                     if len(enemies) == 0:
                         for wave in range(WAVE_NUMBER):
-                            inimigo = Enemy(random.randint(300,1000),random.randint(100, 500))
+                            inimigo = Enemy(random.randint(300,1000),random.randint(100, 500), player)
                             all_sprites.add(inimigo)
                             enemies.add(inimigo)
                         WAVE_NUMBER += 1
@@ -559,8 +594,12 @@ def field_screen(screen):
                             player.speedx = -5
                             player.state = LEFT
                     elif player.state in ARMED:
-                       # if event.key == pygame.K_e:
-                           # player.fire = True
+                        if event.type == pygame.K_e:
+                            bullet = Bullet()
+                            bullet.rect.x = player.rect.x
+                            bullet.rect.y = player.rect.y
+                            all_sprites.add(bullet)
+                            bullets.add(bullet)
                         if event.key == pygame.K_s and player.state not in X_G:
                             steps_sound.play()
                             player.speedy = 5
@@ -608,7 +647,7 @@ def field_screen(screen):
         all_sprites.update()
         screen.fill(BLACK)
         all_sprites.draw(screen) 
-        draw_lifebar(screen, 10, 10, player.health / HEALTH) 
+        draw_lifebar(screen, 10, 10, player.health / HEALTH)
         draw_weapon(screen, 37,11,player.got)
         pygame.display.flip()
         
