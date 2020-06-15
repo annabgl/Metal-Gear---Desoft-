@@ -308,7 +308,8 @@ class Gun(pygame.sprite.Sprite):
         self.rect.y = HEIGHT/2
         
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self,x,y):        
+    def __init__(self,x,y,player):     
+        self.player=player
         pygame.sprite.Sprite.__init__(self)
         
         spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert(),
@@ -374,6 +375,87 @@ class Enemy(pygame.sprite.Sprite):
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
             
+    def update(self):
+        
+        now = pygame.time.get_ticks()
+        elapsed_ticks = now - self.last_update
+        if elapsed_ticks > self.frame_ticks:
+            self.last_update = now
+            self.frame += 1
+            self.animation = self.animations[self.state]
+            if self.frame >= len(self.animation):
+                self.frame = 0
+                if self.state == HIT_FWD:
+                    self.state = IDLE_FWD
+                if self.state == HIT_LEFT:
+                    self.state = IDLE_LEFT
+                if self.state == HIT_BKD:
+                    self.state = IDLE_BKD
+                if self.state == HIT_RIGHT:
+                    self.state = IDLE_RIGHT
+            center = self.rect.center
+            self.image = self.animation[self.frame]
+            self.rect = self.image.get_rect()
+            self.rect.center = center
+            self.mask = pygame.mask.from_surface(self.image)
+        
+
+        if self.fire == True:
+            if self.state == IDLE_FWD:
+                self.state = HIT_FWD
+                self.fire = False
+            if self.state == IDLE_BKD:
+                self.state = HIT_BKD
+                self.fire = False
+            if self.state == IDLE_RIGHT:
+                self.state = HIT_RIGHT
+                self.fire = False
+            if self.state == IDLE_LEFT:
+                self.state = HIT_LEFT
+                self.fire = False
+            else:
+                print(self.state)
+          
+        direction=""   
+        if self.player.rect.bottom > self.rect.bottom:
+            direction = "down"
+            self.speedy = 5 
+            self.state = BKD
+   
+#--------------------------------------------------         
+            
+        if self.state == BKD:  
+            if direction != "down":
+                steps_sound.stop()
+                self.speedy = 0
+                self.speedx = 0
+                self.state = IDLE_BKD
+#left
+#right
+                
+#**********************************************              
+        if self.state == FWD:  
+            if keys[pygame.K_w] == False:
+                steps_sound.stop()
+                self.speedy = 0
+                self.speedx = 0
+                self.state = IDLE_FWD
+        if self.state == RIGHT:  
+            if keys[pygame.K_d] == False:
+                steps_sound.stop()
+                self.speedy = 0
+                self.speedx = 0
+                self.state = IDLE_RIGHT
+        if self.state == LEFT:  
+            if keys[pygame.K_a] == False:
+                steps_sound.stop()
+                self.speedy = 0
+                self.speedx = 0
+                self.state = IDLE_LEFT
+                
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy  
+    
 #class Item(pygame.sprite.Sprite):
 #    def __init__(self):
 #        pygame.sprite.Sprite.__init__(self)
