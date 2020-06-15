@@ -305,6 +305,71 @@ class Gun(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH/2
         self.rect.y = HEIGHT/2
+        
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        
+        spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_right.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_left.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd0.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd1.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_right0.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_right1.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd0.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd1.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_left0.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_left1.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert()]         
+        i = 0
+        while i < len(spritesheet):
+            if i < len(spritesheet) - 1:
+                spritesheet[i] = pygame.transform.scale(spritesheet[i],(30,70))
+                self.image = spritesheet[i]
+                self.image.set_colorkey(WHITE)
+            else:
+                spritesheet[i] = pygame.transform.scale(spritesheet[i],(58,122))
+                self.image = spritesheet[i]
+                self.image.set_colorkey(WHITE)
+            i += 1
+        
+        self.animations = {IDLE_FWD:spritesheet[0:1], 
+                           IDLE_RIGHT:spritesheet[1:2], 
+                           IDLE_BKD:spritesheet[2:3], 
+                           IDLE_LEFT:spritesheet[3:4], 
+                           FWD:spritesheet[4:6],
+                           RIGHT:spritesheet[6:8],
+                           BKD:spritesheet[8:10],
+                           LEFT:spritesheet[10:12],
+                           MARCH_FWD:spritesheet[16:18],
+                           MARCH_RIGHT:spritesheet[18:20],
+                           MARCH_BKD:spritesheet[20:22],
+                           MARCH_LEFT:spritesheet[22:24],
+                           HIT_FWD:spritesheet[24:25],
+                           HIT_RIGHT:spritesheet[25:26],
+                           HIT_BKD:spritesheet[26:27],
+                           HIT_LEFT:spritesheet[27:28]}
+        
+        self.animation = self.animations[self.state]
+        self.frame = 0
+        self.got = False
+        self.fire = False
+        self.image = self.animation[self.frame]
+        self.rect = self.image.get_rect()
+        self.rect.x = WIDTH - 120
+        self.rect.bottom = -20
+        self.speedx = 0
+        self.speedy = 2
+        self.health = HEALTH
+        
+        
+        self.last_update = pygame.time.get_ticks()
+        self.frame_ticks = 100
             
 #class Item(pygame.sprite.Sprite):
 #    def __init__(self):
