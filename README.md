@@ -4,4 +4,4 @@ Anna Beatriz Gomes de Lima,
 Luana Mitsudo Coelho,
 Maria Eduarda Gonçalves Torres
 
-Nosso jogo tem como seu objetivo matar os inimigos, podendo mata-los com seu poder. Se o inimigo for atingido, ele irá desaparecer e aparecer outros.
+Nosso jogo tem como seu objetivo matar os inimigos, podendo mata-los com seu poder. Se o inimigo for atingido, ele irá desaparecer e aparecerão outros.
