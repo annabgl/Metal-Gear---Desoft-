@@ -52,7 +52,7 @@ Y_G = [GUN_FWD, GUN_BKD]
 UNARMED = [IDLE_RIGHT, IDLE_LEFT, IDLE_FWD, IDLE_BKD]
 ARMED = [GUN_RIGHT, GUN_LEFT, GUN_FWD, GUN_BKD]
 MARCH= [MARCH_BKD, MARCH_FWD, MARCH_LEFT, MARCH_RIGHT]
-
+'''
 ENEMY_IDLE_FWD = 21
 ENEMY_IDLE_RIGHT = 22
 ENEMY_IDLE_BKD = 23
@@ -69,6 +69,8 @@ ENEMY_HIT_FWD = 33
 ENEMY_HIT_RIGHT = 34
 ENEMY_HIT_BKD = 35
 ENEMY_HIT_LEFT = 36
+'''
+life_bar = None
 
 ITEM = 0
 
@@ -89,7 +91,9 @@ mapa = [
 
 
 def draw_lifebar(surf, x_b, y_l , pct):
-    life_bar = pygame.image.load(path.join(img_dir,"lifebar.png")).convert_alpha()
+    global life_bar
+    if(life_bar is None):    
+        life_bar = pygame.image.load(path.join(img_dir,"lifebar.png")).convert_alpha()
     if pct < 0:
         pct = 0
     bar_length = 238
@@ -105,15 +109,10 @@ def draw_lifebar(surf, x_b, y_l , pct):
     pygame.draw.rect(surf, color, fill_rect)
     surf.blit(life_bar,(x_b,y_l))
 
-def draw_weapon(surf,x,y,armed):
-    if armed:
-        weapon = pygame.image.load(path.join(img_dir,"gun.png")).convert_alpha()
-        weapon=pygame.transform.scale(weapon, (38, 37))
-        surf.blit(weapon,(x,y))
-    else:
-        weapon = pygame.image.load(path.join(img_dir,"fist.png")).convert_alpha()
-        weapon=pygame.transform.scale(weapon, (38, 37))
-        surf.blit(weapon,(x,y))
+def draw_weapon(surf,x,y,img):
+    weapon = img
+    weapon=pygame.transform.scale(weapon, (38, 37))
+    surf.blit(weapon,(x,y))
     
     
 class Player(pygame.sprite.Sprite):
@@ -326,8 +325,9 @@ class Gun(pygame.sprite.Sprite):
         
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,player_rect,player_state):
+        global bullet_img
         pygame.sprite.Sprite.__init__(self)
-        bullet = pygame.image.load(path.join(img_dir, "bullet.png")).convert_alpha()
+        bullet = bullet_img
         self.image= pygame.transform.scale(bullet,(8,8))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
@@ -401,24 +401,24 @@ class Enemy(pygame.sprite.Sprite):
                 self.image.set_colorkey(WHITE)
             i += 1
         
-        self.animations = {ENEMY_IDLE_FWD:enemy_spritesheet[0:1], 
-                           ENEMY_IDLE_RIGHT:enemy_spritesheet[1:2], 
-                           ENEMY_IDLE_BKD:enemy_spritesheet[2:3], 
-                           ENEMY_IDLE_LEFT:enemy_spritesheet[3:4], 
-                           ENEMY_FWD:enemy_spritesheet[4:6],
-                           ENEMY_RIGHT:enemy_spritesheet[6:8],
-                           ENEMY_BKD:enemy_spritesheet[8:10],
-                           ENEMY_LEFT:enemy_spritesheet[10:12],
-                           ENEMY_MARCH_FWD:enemy_spritesheet[12:14],
-                           ENEMY_MARCH_RIGHT:enemy_spritesheet[14:16],
-                           ENEMY_MARCH_BKD:enemy_spritesheet[16:18],
-                           ENEMY_MARCH_LEFT:enemy_spritesheet[18:20],
-                           ENEMY_HIT_FWD:enemy_spritesheet[20:21],
-                           ENEMY_HIT_RIGHT:enemy_spritesheet[21:22],
-                           ENEMY_HIT_BKD:enemy_spritesheet[22:23],
-                           ENEMY_HIT_LEFT:enemy_spritesheet[23:24]}
+        self.animations = {IDLE_FWD:enemy_spritesheet[0:1], 
+                           IDLE_RIGHT:enemy_spritesheet[1:2], 
+                           IDLE_BKD:enemy_spritesheet[2:3], 
+                           IDLE_LEFT:enemy_spritesheet[3:4], 
+                           FWD:enemy_spritesheet[4:6],
+                           RIGHT:enemy_spritesheet[6:8],
+                           BKD:enemy_spritesheet[8:10],
+                           LEFT:enemy_spritesheet[10:12],
+                           MARCH_FWD:enemy_spritesheet[12:14],
+                           MARCH_RIGHT:enemy_spritesheet[14:16],
+                           MARCH_BKD:enemy_spritesheet[16:18],
+                           MARCH_LEFT:enemy_spritesheet[18:20],
+                           HIT_FWD:enemy_spritesheet[20:21],
+                           HIT_RIGHT:enemy_spritesheet[21:22],
+                           HIT_BKD:enemy_spritesheet[22:23],
+                           HIT_LEFT:enemy_spritesheet[23:24]}
         
-        self.state = ENEMY_RIGHT
+        self.state = RIGHT
         self.animation = self.animations[self.state]
         self.frame = 0
         self.got = False
@@ -433,16 +433,15 @@ class Enemy(pygame.sprite.Sprite):
         self.health_enemy = HEALTH_ENEMY
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
+        self.ready_to_shoot = False
         
     def update(self):
         
         now = pygame.time.get_ticks()
         time_between_shots = now - self.last_time_shot
-        if time_between_shots > 200:
+        if time_between_shots > 5000 +random.randint(-2000,2000):
             self.last_time_shot = now
-            '''bullet = Bullet(self.rect,self.state)
-            all_sprites.add(bullet)
-            bullets.add(bullet)'''   
+            self.ready_to_shoot = True 
         elapsed_ticks = now - self.last_update
         if elapsed_ticks > self.frame_ticks:
             self.last_update = now
@@ -460,39 +459,29 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect.x - self.last_position[0] > 100:
             self.speedx = 0
             self.speedy = 2
-            self.state = ENEMY_BKD
+            self.state = BKD
             self.last_position = [self.rect.x,self.rect.y]
         elif self.rect.y - self.last_position[1] > 100:
             self.speedx = -2
             self.speedy = 0
-            self.state = ENEMY_LEFT
+            self.state = LEFT
             self.last_position = [self.rect.x,self.rect.y]
         elif self.rect.x - self.last_position[0] < -100:
             self.speedx = 0
             self.speedy = -2
-            self.state = ENEMY_FWD
+            self.state = FWD
             self.last_position = [self.rect.x,self.rect.y]
         elif self.rect.y - self.last_position[1] < -100:
             self.speedx = 2
             self.speedy = 0
-            self.state = ENEMY_RIGHT
+            self.state = RIGHT
             self.last_position = [self.rect.x,self.rect.y]
         
         
         self.rect.x += self.speedx
         self.rect.y += self.speedy  
        # print(self.rect.x - self.last_position[0])    
-    def lifebar_enemy(self):
-        if self.life_enemy > 60:
-            color = GREEN
-        elif self.life_enemy > 30:
-            color = YELLOW
-        else:
-            color = RED
-        width = int(self.rect.width * self.health_enemy / 100)
-        self.health_enemy = pygame.Rect(0, 0, width, 7)
-        if self.life_enemy < 100:
-            pygame.draw.rect(self.image, color, self.health_enemy)
+
             
 pygame.init()
 pygame.mixer.init()
@@ -504,6 +493,9 @@ spotted_sound = pygame.mixer.Sound(path.join(snd_dir, 'spotted.ogg'))
 land_sound = pygame.mixer.Sound(path.join(snd_dir, 'land.wav'))
 cock_sound = pygame.mixer.Sound(path.join(snd_dir, 'cock.wav'))
 
+gun_img = pygame.image.load(path.join(img_dir,"gun.png")).convert_alpha()
+fist_img = pygame.image.load(path.join(img_dir,"fist.png")).convert_alpha()
+bullet_img = pygame.image.load(path.join(img_dir, "bullet.png")).convert_alpha()
 
 def field_screen(screen):
     global    WAVE_NUMBER
@@ -517,6 +509,7 @@ def field_screen(screen):
     trees = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     bullets = pygame.sprite.Group()
+    enemy_bullets = pygame.sprite.Group()
     walls = [Wall(-10, 0, 10, HEIGHT), Wall(0, -10, WIDTH, 10), Wall(1330, 0, 10, HEIGHT),Wall(0, 690, WIDTH, 10)]
     player = Player()
     gun = Gun()
@@ -583,6 +576,9 @@ def field_screen(screen):
                             player.state = LEFT
         
         if player.state != AIR:
+            collisions = pygame.sprite.spritecollide(player, enemy_bullets, True)
+            for collition in collisions:
+                player.health -= 10
             collisions = pygame.sprite.spritecollide(player, trees, False)
             for wall in walls:
                 if(pygame.sprite.collide_rect(player, wall)):
@@ -595,9 +591,14 @@ def field_screen(screen):
                 if player.speedy > 0:
                     player.rect.bottom = collision.rect.top
                 elif player.speedy < 0:
-                    player.rect.top = collision.rect.bottom
+                    player.rect.top = collision.rect.bottomq
             loot = pygame.sprite.collide_mask(player, gun)
             for inimigo in enemies:
+                if(inimigo.ready_to_shoot):
+                    bullet = Bullet(inimigo.rect,inimigo.state)
+                    all_sprites.add(bullet)
+                    enemy_bullets.add(bullet) 
+                    inimigo.ready_to_shoot= False
                 collisions = pygame.sprite.spritecollide(inimigo,trees,False)
                 for collision in collisions:
                     if inimigo.speedx > 0:
@@ -624,7 +625,10 @@ def field_screen(screen):
         screen.fill(BLACK)
         all_sprites.draw(screen) 
         draw_lifebar(screen, 10, 10, player.health / HEALTH)
-        draw_weapon(screen, 37,11,player.got)
+        if(not player.got):
+            draw_weapon(screen, 37,11,fist_img)
+        else:
+            draw_weapon(screen, 37,11,gun_img)
         pygame.display.flip()
         
         
