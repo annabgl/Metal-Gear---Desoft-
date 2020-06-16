@@ -1,11 +1,13 @@
+# Importando as bibliotecas desnecessárias
 import pygame
-import time
 import random
 from os import path
 
+# carregando nossas pastas de imagens e sons
 img_dir = path.join(path.dirname(__file__), 'imagens')
 snd_dir = path.join(path.dirname(__file__), 'sons')
 
+# Declarando variáveis necessárias
 WIN = pygame.display.set_mode((500,480))
 WIDTH = 1344
 HEIGHT = 704 
@@ -14,6 +16,7 @@ HEALTH = 100
 HEALTH_ENEMY = 100
 WAVE_NUMBER = 1
 
+# Setando as cores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -24,6 +27,7 @@ TILESIZE = 64
 GRIDWIDTH = WIDTH / TILESIZE
 GRIDHEIGHT = HEIGHT / TILESIZE
 
+# Guardando posições das Sprites
 IDLE_FWD = 0
 IDLE_RIGHT = 1
 IDLE_BKD = 2
@@ -45,6 +49,8 @@ HIT_FWD = 17
 HIT_RIGHT = 18
 HIT_BKD = 19
 HIT_LEFT = 20
+
+# listas de sprites
 X = [RIGHT, LEFT]
 Y = [FWD,BKD]
 X_G = [GUN_RIGHT, GUN_LEFT]
@@ -52,28 +58,13 @@ Y_G = [GUN_FWD, GUN_BKD]
 UNARMED = [IDLE_RIGHT, IDLE_LEFT, IDLE_FWD, IDLE_BKD]
 ARMED = [GUN_RIGHT, GUN_LEFT, GUN_FWD, GUN_BKD]
 MARCH= [MARCH_BKD, MARCH_FWD, MARCH_LEFT, MARCH_RIGHT]
-'''
-ENEMY_IDLE_FWD = 21
-ENEMY_IDLE_RIGHT = 22
-ENEMY_IDLE_BKD = 23
-ENEMY_IDLE_LEFT = 24
-ENEMY_FWD = 25
-ENEMY_RIGHT = 26
-ENEMY_BKD = 27
-ENEMY_LEFT = 28
-ENEMY_MARCH_FWD = 29
-ENEMY_MARCH_RIGHT = 30
-ENEMY_MARCH_BKD = 31
-ENEMY_MARCH_LEFT = 32
-ENEMY_HIT_FWD = 33
-ENEMY_HIT_RIGHT = 34
-ENEMY_HIT_BKD = 35
-ENEMY_HIT_LEFT = 36
-'''
+
+
 life_bar = None
 
 ITEM = 0
 
+# Desenhando Mapa
 o = 0
 l = 1 
 mapa = [
@@ -89,7 +80,7 @@ mapa = [
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l],
        [o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,l]]
 
-
+# Funcão que desenha a barra de vida
 def draw_lifebar(surf, x_b, y_l , pct):
     global life_bar
     if(life_bar is None):    
@@ -109,18 +100,21 @@ def draw_lifebar(surf, x_b, y_l , pct):
     pygame.draw.rect(surf, color, fill_rect)
     surf.blit(life_bar,(x_b,y_l))
 
+# Função que troca a imagem da barra de vida
 def draw_weapon(surf,x,y,img):
     weapon = img
     weapon=pygame.transform.scale(weapon, (38, 37))
     surf.blit(weapon,(x,y))
     
-    
+
+# Classe do nosso jogador   
 class Player(pygame.sprite.Sprite):
     
     def __init__(self):
         
         pygame.sprite.Sprite.__init__(self)
         
+        # Guardando nossas imagens em uma lista 
         spritesheet =    [pygame.image.load(path.join(img_dir, "fwd.png")).convert(),
                           pygame.image.load(path.join(img_dir, "right.png")).convert(),
                           pygame.image.load(path.join(img_dir, "bkd.png")).convert(),
@@ -162,6 +156,7 @@ class Player(pygame.sprite.Sprite):
                 self.image.set_colorkey(WHITE)
             i += 1
         
+        # Carrega Animação de acordo com as Sprites
         self.animations = {IDLE_FWD:spritesheet[0:1], 
                            IDLE_RIGHT:spritesheet[1:2], 
                            IDLE_BKD:spritesheet[2:3], 
@@ -184,6 +179,7 @@ class Player(pygame.sprite.Sprite):
                            HIT_LEFT:spritesheet[27:28],
                            AIR:spritesheet[28:29]}
         
+        #Declarando Variáveis do Player
         self.state = AIR
         self.animation = self.animations[self.state]
         self.frame = 0
@@ -200,7 +196,8 @@ class Player(pygame.sprite.Sprite):
         
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
-        
+    
+    # Função que atualiza o movimento do Jogador    
     def update(self):
         
         if self.state == AIR and self.rect.bottom == HEIGHT - 20:
@@ -276,7 +273,8 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x += self.speedx
         self.rect.y += self.speedy
-        
+    
+    # Função que Desenha a vida a medida que ele vai perdendo    
     def lifebar(self):
         if self.life > 60:
             color = GREEN
@@ -288,7 +286,8 @@ class Player(pygame.sprite.Sprite):
         self.health = pygame.Rect(0, 0, width, 7)
         if self.life < 100:
             pygame.draw.rect(self.image, color, self.health)
-        
+
+# Função que Desenha a areia         
 class Tile(pygame.sprite.Sprite):
     def __init__(self, row, column):
         pygame.sprite.Sprite.__init__(self)
@@ -298,7 +297,8 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = TILESIZE * column
         self.rect.y = TILESIZE * row
-        
+
+# Função que desenha a árvore        
 class Tree(pygame.sprite.Sprite):
     def __init__(self, row, column):
         pygame.sprite.Sprite.__init__(self)
@@ -308,11 +308,13 @@ class Tree(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = TILESIZE * column
         self.rect.y = TILESIZE * row
-        
+
+# Função que define uma parede imaginária        
 class Wall():
     def __init__(self, x, y, WIDTH, HEIGHT):  
         self.rect = pygame.Rect(x, y, WIDTH, HEIGHT)
 
+# Função que Carrega a imagem da nossa arma 
 class Gun(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -322,7 +324,8 @@ class Gun(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH/2
         self.rect.y = HEIGHT/2
-        
+
+# Função que desenha a Bala        
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,player_rect,player_state):
         global bullet_img
@@ -369,7 +372,7 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.x > WIDTH or self.rect.x<0 or self.rect.y < 0 or self.rect.y > HEIGHT:
             self.kill()
             
-            
+# Função que Carrega as imagens do inimigo e declara suas váriaveis principais            
 class Enemy(pygame.sprite.Sprite):
     def __init__(self,x,y,player):
         self.last_time_shot = 0
@@ -401,6 +404,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.image.set_colorkey(WHITE)
             i += 1
         
+        # Animações do Inimigo
         self.animations = {IDLE_FWD:enemy_spritesheet[0:1], 
                            IDLE_RIGHT:enemy_spritesheet[1:2], 
                            IDLE_BKD:enemy_spritesheet[2:3], 
@@ -482,7 +486,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y += self.speedy  
        # print(self.rect.x - self.last_position[0])    
 
-            
+# Carrega Sons e Imagens            
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT),pygame.FULLSCREEN)
@@ -497,6 +501,7 @@ gun_img = pygame.image.load(path.join(img_dir,"gun.png")).convert_alpha()
 fist_img = pygame.image.load(path.join(img_dir,"fist.png")).convert_alpha()
 bullet_img = pygame.image.load(path.join(img_dir, "bullet.png")).convert_alpha()
 
+# Função que Carrega a tela Principal, onde ocorre o jogo
 def field_screen(screen):
     global    WAVE_NUMBER
     running = True  
@@ -546,7 +551,8 @@ def field_screen(screen):
                 running = False
             if event.type == pygame.KEYDOWN:       
                 if event.key == pygame.K_q:
-                    running = False            
+                    running = False
+                # loop que só ocorre quando o jogador chega no chão e está desarmado
                 if player.state != AIR:
                     if player.state in UNARMED:
                         #print(event.key)
@@ -575,6 +581,7 @@ def field_screen(screen):
                             player.speedx = -5
                             player.state = LEFT
         
+        # Colisão do jogador com a tela e colisão das balas do inimigo e jogador 
         if player.state != AIR:
             collisions = pygame.sprite.spritecollide(player, enemy_bullets, True)
             for collition in collisions:
@@ -621,6 +628,7 @@ def field_screen(screen):
             
             collisions = pygame.sprite.spritecollide(player, enemies, False)
         
+        # Carregando Fundo de Tela e Sprites
         all_sprites.update()
         screen.fill(BLACK)
         all_sprites.draw(screen) 
@@ -631,7 +639,7 @@ def field_screen(screen):
             draw_weapon(screen, 37,11,gun_img)
         pygame.display.flip()
         
-        
+# Tela Principal do Jogo        
 try:
     field_screen(screen)
 finally:
