@@ -6,10 +6,12 @@ from os import path
 img_dir = path.join(path.dirname(__file__), 'imagens')
 snd_dir = path.join(path.dirname(__file__), 'sons')
 
+WIN = pygame.display.set_mode((500,480))
 WIDTH = 1344
 HEIGHT = 704 
 FPS = 60
 HEALTH = 100
+HEALTH_ENEMY = 100
 WAVE_NUMBER = 1
 
 WHITE = (255, 255, 255)
@@ -18,7 +20,6 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
-
 TILESIZE = 64
 GRIDWIDTH = WIDTH / TILESIZE
 GRIDHEIGHT = HEIGHT / TILESIZE
@@ -52,6 +53,22 @@ UNARMED = [IDLE_RIGHT, IDLE_LEFT, IDLE_FWD, IDLE_BKD]
 ARMED = [GUN_RIGHT, GUN_LEFT, GUN_FWD, GUN_BKD]
 MARCH= [MARCH_BKD, MARCH_FWD, MARCH_LEFT, MARCH_RIGHT]
 
+ENEMY_IDLE_FWD = 21
+ENEMY_IDLE_RIGHT = 22
+ENEMY_IDLE_BKD = 23
+ENEMY_IDLE_LEFT = 24
+ENEMY_FWD = 25
+ENEMY_RIGHT = 26
+ENEMY_BKD = 27
+ENEMY_LEFT = 28
+ENEMY_MARCH_FWD = 29
+ENEMY_MARCH_RIGHT = 30
+ENEMY_MARCH_BKD = 31
+ENEMY_MARCH_LEFT = 32
+ENEMY_HIT_FWD = 33
+ENEMY_HIT_RIGHT = 34
+ENEMY_HIT_BKD = 35
+ENEMY_HIT_LEFT = 36
 
 ITEM = 0
 
@@ -190,6 +207,7 @@ class Player(pygame.sprite.Sprite):
         if self.state == AIR and self.rect.bottom == HEIGHT - 20:
             land_sound.play()
             self.state = IDLE_RIGHT
+            self.speedx = 0
             self.speedy = 0
         
         now = pygame.time.get_ticks()
@@ -229,16 +247,14 @@ class Player(pygame.sprite.Sprite):
                 self.state = HIT_LEFT
                 self.fire = False
             else:
-                print(self.state)
-          
-        keys = pygame.key.get_pressed() 
+                pass
+        keys = pygame.key.get_pressed()
         if self.state == BKD:  
             if keys[pygame.K_s] == False:
                 steps_sound.stop()
                 self.speedy = 0
                 self.speedx = 0
-                self.state = IDLE_BKD
-                
+                self.state = IDLE_BKD        
         if self.state == FWD:  
             if keys[pygame.K_w] == False:
                 steps_sound.stop()
@@ -257,7 +273,8 @@ class Player(pygame.sprite.Sprite):
                 self.speedy = 0
                 self.speedx = 0
                 self.state = IDLE_LEFT
-                
+        
+
         self.rect.x += self.speedx
         self.rect.y += self.speedy
         
@@ -307,57 +324,101 @@ class Gun(pygame.sprite.Sprite):
         self.rect.x = WIDTH/2
         self.rect.y = HEIGHT/2
         
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self,player_rect,player_state):
+        pygame.sprite.Sprite.__init__(self)
+        bullet = pygame.image.load(path.join(img_dir, "bullet.png")).convert_alpha()
+        self.image= pygame.transform.scale(bullet,(8,8))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.rect.x = player_rect.x
+        self.rect.y = player_rect.y
+        if player_state in X:
+            self.speedy = 0
+            if player_state == RIGHT:      
+                self.speedx = 20
+            else:
+                self.speedx = -20
+        elif player_state in Y:
+            self.speedx = 0
+            if player_state == FWD:
+                self.speedy = -20
+            else:
+                self.speedy = 20
+        elif player_state == IDLE_FWD:
+            self.speedx = 0
+            self.speedy = -20
+        elif player_state == IDLE_BKD:
+            self.speedx = 0
+            self.speedy = 20
+        elif player_state == IDLE_RIGHT:
+            self.speedx = 20
+            self.speedy = 0           
+        elif player_state == IDLE_LEFT:
+            self.speedx = -20
+            self.speedy = 0
+        else:
+            self.speedx = 0
+            self.speedy = 0
+
+
+                   
+    def update(self): 
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        if self.rect.x > WIDTH or self.rect.x<0 or self.rect.y < 0 or self.rect.y > HEIGHT:
+            self.kill()
+            
+            
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self,x,y):        
+    def __init__(self,x,y,player):
+        self.last_time_shot = 0
+        self.player=player
         pygame.sprite.Sprite.__init__(self)
         
-        spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_fwd0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_fwd1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_right1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_bkd1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left0.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_left1.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert(),
-                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert()] 
+        enemy_spritesheet =   [pygame.image.load(path.join(img_dir, "enemy_fwd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_fwd1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_right1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_bkd1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left0.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_left1.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_fwd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_right.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_bkd.png")).convert_alpha(),
+                        pygame.image.load(path.join(img_dir, "enemy_hit_left.png")).convert_alpha()] 
         
         i = 0
-        while i < len(spritesheet):
-            if i < len(spritesheet) - 1:
-                spritesheet[i] = pygame.transform.scale(spritesheet[i],(30,70))
-                self.image = spritesheet[i]
-                self.image.set_colorkey(WHITE)
-            else:
-                spritesheet[i] = pygame.transform.scale(spritesheet[i],(58,122))
-                self.image = spritesheet[i]
+        while i < len(enemy_spritesheet):
+            if i < len(enemy_spritesheet):
+                enemy_spritesheet[i] = pygame.transform.scale(enemy_spritesheet[i],(30,60))
+                self.image = enemy_spritesheet[i]
                 self.image.set_colorkey(WHITE)
             i += 1
         
-        self.animations = {IDLE_FWD:spritesheet[0:1], 
-                           IDLE_RIGHT:spritesheet[1:2], 
-                           IDLE_BKD:spritesheet[2:3], 
-                           IDLE_LEFT:spritesheet[3:4], 
-                           FWD:spritesheet[4:6],
-                           RIGHT:spritesheet[6:8],
-                           BKD:spritesheet[8:10],
-                           LEFT:spritesheet[10:12],
-                           MARCH_FWD:spritesheet[16:18],
-                           MARCH_RIGHT:spritesheet[18:20],
-                           MARCH_BKD:spritesheet[20:22],
-                           MARCH_LEFT:spritesheet[22:24],
-                           HIT_FWD:spritesheet[24:25],
-                           HIT_RIGHT:spritesheet[25:26],
-                           HIT_BKD:spritesheet[26:27],
-                           HIT_LEFT:spritesheet[27:28]}
+        self.animations = {ENEMY_IDLE_FWD:enemy_spritesheet[0:1], 
+                           ENEMY_IDLE_RIGHT:enemy_spritesheet[1:2], 
+                           ENEMY_IDLE_BKD:enemy_spritesheet[2:3], 
+                           ENEMY_IDLE_LEFT:enemy_spritesheet[3:4], 
+                           ENEMY_FWD:enemy_spritesheet[4:6],
+                           ENEMY_RIGHT:enemy_spritesheet[6:8],
+                           ENEMY_BKD:enemy_spritesheet[8:10],
+                           ENEMY_LEFT:enemy_spritesheet[10:12],
+                           ENEMY_MARCH_FWD:enemy_spritesheet[12:14],
+                           ENEMY_MARCH_RIGHT:enemy_spritesheet[14:16],
+                           ENEMY_MARCH_BKD:enemy_spritesheet[16:18],
+                           ENEMY_MARCH_LEFT:enemy_spritesheet[18:20],
+                           ENEMY_HIT_FWD:enemy_spritesheet[20:21],
+                           ENEMY_HIT_RIGHT:enemy_spritesheet[21:22],
+                           ENEMY_HIT_BKD:enemy_spritesheet[22:23],
+                           ENEMY_HIT_LEFT:enemy_spritesheet[23:24]}
         
-        self.state = FWD
+        self.state = ENEMY_RIGHT
         self.animation = self.animations[self.state]
         self.frame = 0
         self.got = False
@@ -366,35 +427,72 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.bottom = y
-        self.speedx = 0
-        self.speedy = 2
-        self.health = HEALTH
-        
-        
+        self.speedx = 2
+        self.speedy = 0
+        self.last_position = [300,100]
+        self.health_enemy = HEALTH_ENEMY
         self.last_update = pygame.time.get_ticks()
         self.frame_ticks = 100
+        
+    def update(self):
+        
+        now = pygame.time.get_ticks()
+        time_between_shots = now - self.last_time_shot
+        if time_between_shots > 200:
+            self.last_time_shot = now
+            '''bullet = Bullet(self.rect,self.state)
+            all_sprites.add(bullet)
+            bullets.add(bullet)'''   
+        elapsed_ticks = now - self.last_update
+        if elapsed_ticks > self.frame_ticks:
+            self.last_update = now
+            self.frame += 1
+            self.animation = self.animations[self.state]
+            if self.frame >= len(self.animation):
+                self.frame = 0
+            center = self.rect.center
+            self.image = self.animation[self.frame]
+            self.rect = self.image.get_rect()
+            self.rect.center = center
+            self.mask = pygame.mask.from_surface(self.image)
             
-#class Item(pygame.sprite.Sprite):
-#    def __init__(self):
-#        pygame.sprite.Sprite.__init__(self)
-#        itemsheet =    [pygame.image.load(path.join(img_dir, "fist.png")).convert(),
-#                        pygame.image.load(path.join(img_dir, "gun.png")).convert()] 
-#        i = 0
-#        while i < len(itemsheet):
-#            itemsheet[i] = pygame.transform.scale(itemsheet[i],(30,30))
-#            self.image = itemsheet[i]
-#            self.image.set_colorkey(WHITE)
-#        
-#        self.gun = False
-#        self.image = itemsheet[0]
-#        self.rect = self.image.get_rect()
-#        self.rect.x = WIDTH/2
-#        self.rect.y = HEIGHT/2
-             
-#    def update(self):
-#        
-#        if self.gun == True:
-#            self.image = itemsheet[1]
+            
+        if self.rect.x - self.last_position[0] > 100:
+            self.speedx = 0
+            self.speedy = 2
+            self.state = ENEMY_BKD
+            self.last_position = [self.rect.x,self.rect.y]
+        elif self.rect.y - self.last_position[1] > 100:
+            self.speedx = -2
+            self.speedy = 0
+            self.state = ENEMY_LEFT
+            self.last_position = [self.rect.x,self.rect.y]
+        elif self.rect.x - self.last_position[0] < -100:
+            self.speedx = 0
+            self.speedy = -2
+            self.state = ENEMY_FWD
+            self.last_position = [self.rect.x,self.rect.y]
+        elif self.rect.y - self.last_position[1] < -100:
+            self.speedx = 2
+            self.speedy = 0
+            self.state = ENEMY_RIGHT
+            self.last_position = [self.rect.x,self.rect.y]
+        
+        
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy  
+       # print(self.rect.x - self.last_position[0])    
+    def lifebar_enemy(self):
+        if self.life_enemy > 60:
+            color = GREEN
+        elif self.life_enemy > 30:
+            color = YELLOW
+        else:
+            color = RED
+        width = int(self.rect.width * self.health_enemy / 100)
+        self.health_enemy = pygame.Rect(0, 0, width, 7)
+        if self.life_enemy < 100:
+            pygame.draw.rect(self.image, color, self.health_enemy)
             
 pygame.init()
 pygame.mixer.init()
@@ -418,6 +516,7 @@ def field_screen(screen):
     tiles = pygame.sprite.Group()
     trees = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
     walls = [Wall(-10, 0, 10, HEIGHT), Wall(0, -10, WIDTH, 10), Wall(1330, 0, 10, HEIGHT),Wall(0, 690, WIDTH, 10)]
     player = Player()
     gun = Gun()
@@ -442,22 +541,28 @@ def field_screen(screen):
     while running:
         
         clock.tick(FPS)
+        
+        if len(enemies) == 0:
+            for wave in range(WAVE_NUMBER):
+                inimigo = Enemy(random.randint(300,600),random.randint(100,300), player)
+                all_sprites.add(inimigo)
+                enemies.add(inimigo)
+            WAVE_NUMBER += 1
         for event in pygame.event.get():      
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:       
                 if event.key == pygame.K_q:
-                    running = False
+                    running = False            
                 if player.state != AIR:
-                    if len(enemies) == 0:
-                        for wave in range(WAVE_NUMBER):
-                            inimigo = Enemy(random.randint(300,1000),random.randint(100, 500))
-                            all_sprites.add(inimigo)
-                            enemies.add(inimigo)
-                        WAVE_NUMBER += 1
                     if player.state in UNARMED:
-                        print(event.key)
+                        #print(event.key)
                         if event.key == pygame.K_e:
+                            if player.got:
+                                bullet = Bullet(player.rect,player.state)
+                                all_sprites.add(bullet)
+                                bullets.add(bullet)     
+                           
                             #spotted_sound.play()
                             player.fire = True
                         if event.key == pygame.K_s and player.state not in X:
@@ -476,27 +581,6 @@ def field_screen(screen):
                             steps_sound.play()
                             player.speedx = -5
                             player.state = LEFT
-                    elif player.state in ARMED:
-                       # if event.key == pygame.K_e:
-                           # player.fire = True
-                        if event.key == pygame.K_s and player.state not in X_G:
-                            steps_sound.play()
-                            player.speedy = 5
-                            player.state = MARCH_BKD
-                        if event.key == pygame.K_w and player.state not in X_G:
-                            steps_sound.play()
-                            player.speedy = -5
-                            player.state = MARCH_FWD
-                        if event.key == pygame.K_d and player.state not in Y_G:
-                            steps_sound.play()
-                            player.speedx = 5
-                            player.state = MARCH_RIGHT
-                        if event.key == pygame.K_a and player.state not in Y_G:
-                            steps_sound.play()
-                            player.speedx = -5
-                            player.state = MARCH_LEFT
-                    if event.key == pygame.K_p:
-                        player.fire = True
         
         if player.state != AIR:
             collisions = pygame.sprite.spritecollide(player, trees, False)
@@ -513,6 +597,21 @@ def field_screen(screen):
                 elif player.speedy < 0:
                     player.rect.top = collision.rect.bottom
             loot = pygame.sprite.collide_mask(player, gun)
+            for inimigo in enemies:
+                collisions = pygame.sprite.spritecollide(inimigo,trees,False)
+                for collision in collisions:
+                    if inimigo.speedx > 0:
+                        inimigo.rect.right = collision.rect.left
+                    elif inimigo.speedx < 0:
+                        inimigo.rect.left = collision.rect.right
+                    if inimigo.speedy > 0:
+                        inimigo.rect.bottom = collision.rect.top
+                    elif inimigo.speedy < 0:
+                        inimigo.rect.top = collision.rect.bottom
+                collisions = pygame.sprite.spritecollide(inimigo, bullets, True)
+                if len(collisions) > 0:
+                    inimigo.kill()
+
             if loot != None and player.got == False:
                 cock_sound.play()
                 gun.kill()
@@ -520,13 +619,11 @@ def field_screen(screen):
 #                item.gun = True
             
             collisions = pygame.sprite.spritecollide(player, enemies, False)
-            
-            
-                
+        
         all_sprites.update()
         screen.fill(BLACK)
         all_sprites.draw(screen) 
-        draw_lifebar(screen, 10, 10, player.health / HEALTH) 
+        draw_lifebar(screen, 10, 10, player.health / HEALTH)
         draw_weapon(screen, 37,11,player.got)
         pygame.display.flip()
         
